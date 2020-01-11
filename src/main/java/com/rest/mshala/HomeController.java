@@ -20,6 +20,8 @@ public class HomeController {
     CommunicationService<String, String, String> communicationService;
     @Autowired
     UserService userService;
+    @Autowired
+    CacheService cacheService;
 
     private static final Logger logger = LoggerFactory.getLogger(HomeController.class);
 
@@ -29,17 +31,29 @@ public class HomeController {
     }
 
     @GetMapping("/otp")
-    public String getOtp(){
+    public String generateOtp(@RequestParam String mobileNumber){
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String  userName = "dummyUser";
         if(authentication != null)
             userName = authentication.getName();
 
-        String otp = otpService.getOtp(userName);
+        String otp = otpService.getOtp(mobileNumber);
         logger.debug("userName : {} otp : {}", userName, otp );
         communicationService.sendMessage("Otp from EduBuzz", "Your otp for logging in is : " + otp , "prasaddongrekar@gmail.com");
 
         return otp;
+    }
+
+    @PostMapping("/verify")
+    public boolean verifyOtp(@RequestParam String otp, @RequestParam String mobileNumber){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userName = "dummyUser";
+
+        if(authentication != null)
+            userName = authentication.getName();
+
+        return cacheService.verify(mobileNumber, otp);
+
     }
 
     @PostMapping("/register")
